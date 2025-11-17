@@ -4,6 +4,7 @@ using Explorer.Stakeholders.API.Dtos;
 using Explorer.Stakeholders.API.Public;
 using Explorer.Stakeholders.Core.Domain;
 using Explorer.Stakeholders.Core.Domain.RepositoryInterfaces;
+using ProfileEntity = Explorer.Stakeholders.Core.Domain.Profile;
 
 namespace Explorer.Stakeholders.Core.UseCases;
 
@@ -34,13 +35,13 @@ public class ProfileService : IProfileService
         return _mapper.Map<ProfileDto>(profile);
     }
 
-    private Profile EnsureProfileExists(long personId)
+    private ProfileEntity EnsureProfileExists(long personId)
     {
         var profile = _profileRepository.GetByPersonId(personId);
         if (profile != null) return profile;
 
         var person = _personRepository.Get(personId) ?? throw new KeyNotFoundException("Person not found.");
-        var newProfile = new Profile(person.Name, person.Surname, person.Id, null, null, null);
+        var newProfile = new ProfileEntity(person.Name, person.Surname, person.Id, null, null, null);
         return _profileRepository.Create(newProfile);
     }
 }
