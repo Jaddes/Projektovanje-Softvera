@@ -1,36 +1,10 @@
-using Explorer.Stakeholders.API.Dtos;
-using Explorer.Stakeholders.API.Public;
-using Explorer.Stakeholders.Infrastructure.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+namespace Explorer.Stakeholders.Core.Domain.RepositoryInterfaces;
 
-namespace Explorer.API.Controllers.Tourist;
+using Explorer.Stakeholders.Core.Domain;
 
-[Authorize(Policy = "touristPolicy")]
-[Route("api/tourist/profile")]
-[ApiController]
-public class ProfileController : ControllerBase
+public interface IProfileRepository
 {
-    private readonly IProfileService _profileService;
-
-    public ProfileController(IProfileService profileService)
-    {
-        _profileService = profileService;
-    }
-
-    [HttpGet]
-    public ActionResult<ProfileDto> Get()
-    {
-        var personId = User.PersonId();
-        var result = _profileService.GetForCurrentTourist(personId);
-        return Ok(result);
-    }
-
-    [HttpPut]
-    public ActionResult<ProfileDto> Update([FromBody] ProfileDto dto)
-    {
-        var personId = User.PersonId();
-        var result = _profileService.UpdateForCurrentTourist(personId, dto);
-        return Ok(result);
-    }
+    Profile? GetByPersonId(long personId);
+    Profile Create(Profile entity);
+    Profile Update(Profile entity); 
 }
