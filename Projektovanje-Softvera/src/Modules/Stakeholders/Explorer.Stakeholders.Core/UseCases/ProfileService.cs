@@ -21,13 +21,9 @@ public class ProfileService : IProfileService
         _mapper = mapper;
     }
 
-    public ProfileDto GetForCurrentTourist(long personId)
-    {
-        var profile = EnsureProfileExists(personId);
-        return _mapper.Map<ProfileDto>(profile);
-    }
+    public ProfileDto GetProfile(long personId) => _mapper.Map<ProfileDto>(EnsureProfileExists(personId));
 
-    public ProfileDto UpdateForCurrentTourist(long personId, ProfileDto profileDto)
+    public ProfileDto UpdateProfile(long personId, ProfileDto profileDto)
     {
         var profile = EnsureProfileExists(personId);
         profile.Update(profileDto.Name, profileDto.Surname, profileDto.Biography, profileDto.Motto, profileDto.ProfilePictureUrl);
@@ -43,20 +39,6 @@ public class ProfileService : IProfileService
         var person = _personRepository.Get(personId) ?? throw new KeyNotFoundException("Person not found.");
         var newProfile = new ProfileEntity(person.Name, person.Surname, person.Id, null, null, null);
         return _profileRepository.Create(newProfile);
-    }
-
-    public ProfileDto GetForCurrentAuthor(long personId)
-    {
-        var profile = EnsureProfileExists(personId);
-        return _mapper.Map<ProfileDto>(profile);
-    }
-
-    public ProfileDto UpdateForCurrentAuthor(long personId, ProfileDto profileDto)
-    {
-        var profile = EnsureProfileExists(personId);
-        profile.Update(profileDto.Name, profileDto.Surname, profileDto.Biography, profileDto.Motto, profileDto.ProfilePictureUrl);
-        _profileRepository.Update(profile);
-        return _mapper.Map<ProfileDto>(profile);
     }
 
 }

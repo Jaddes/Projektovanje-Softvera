@@ -22,7 +22,7 @@ public class ProfileController : ControllerBase
     public ActionResult<ProfileDto> Get()
     {
         var personId = User.PersonId();
-        var result = _profileService.GetForCurrentTourist(personId);
+        var result = _profileService.GetProfile(personId);
         return Ok(result);
     }
 
@@ -30,7 +30,7 @@ public class ProfileController : ControllerBase
     public ActionResult<ProfileDto> Update([FromBody] ProfileDto dto)
     {
         var personId = User.PersonId();
-        var result = _profileService.UpdateForCurrentTourist(personId, dto);
+        var result = _profileService.UpdateProfile(personId, dto);
         return Ok(result);
     }
 }
