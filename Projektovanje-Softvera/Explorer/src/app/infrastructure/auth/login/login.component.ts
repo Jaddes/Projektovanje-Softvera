@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
 import { Login } from '../model/login.model';
@@ -11,28 +11,52 @@ import { Login } from '../model/login.model';
 })
 export class LoginComponent {
 
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
+  errorMessage = '';
+  isSubmitting = false;
 
-  loginForm = new FormGroup({
-    username: new FormControl('', [Validators.required]),
-    password: new FormControl('', [Validators.required]),
+  loginForm = this.fb.group({
+    username: ['', [Validators.required]],
+    password: ['', [Validators.required]],
   });
 
-  login(): void {
-    const login: Login = {
-      username: this.loginForm.value.username || "",
-      password: this.loginForm.value.password || "",
-    };
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {}
 
-    if (this.loginForm.valid) {
-      this.authService.login(login).subscribe({
-        next: () => {
-          this.router.navigate(['/']);
-        },
-      });
+  get username() {
+    return this.loginForm.get('username');
+  }
+
+  get password() {
+    return this.loginForm.get('password');
+  }
+
+  onSubmit(): void {
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
     }
+
+    this.errorMessage = '';
+    this.isSubmitting = true;
+
+    const credentials = this.loginForm.value as Login;
+    this.authService.login(credentials).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.errorMessage = '';
+        this.router.navigate(['/home']);
+      },
+      error: (error) => {
+        this.isSubmitting = false;
+        if (error?.status === 400 || error?.status === 401) {
+          this.errorMessage = 'Invalid username or password.';
+        } else {
+          this.errorMessage = 'Cannot reach server. Is the API running?';
+        }
+      }
+    });
   }
 }

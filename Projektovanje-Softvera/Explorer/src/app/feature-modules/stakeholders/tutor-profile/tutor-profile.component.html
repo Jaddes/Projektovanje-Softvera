@@ -1,0 +1,44 @@
+<div class="tutor-profile-page">
+  <div *ngIf="successMessage" class="tutor-profile-page__alert tutor-profile-page__alert--success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="errorMessage" class="tutor-profile-page__alert tutor-profile-page__alert--error">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="isLoading" class="tutor-profile-page__status">
+    Loading profile...
+  </div>
+
+  <section *ngIf="!isLoading && profile" class="tutor-profile-card">
+    <div class="tutor-profile-card__picture">
+      <img *ngIf="profile.profilePictureUrl; else noPicture"
+           [src]="profile.profilePictureUrl"
+           alt="Tutor profile picture">
+      <ng-template #noPicture>
+        <div class="tutor-profile-card__placeholder">
+          No photo
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="tutor-profile-card__details">
+      <h2>{{ profile.name }} {{ profile.surname }}</h2>
+
+      <p class="tutor-profile-card__label">Biography</p>
+      <p class="tutor-profile-card__text">
+        {{ profile.biography || 'You have not added a biography yet.' }}
+      </p>
+
+      <p class="tutor-profile-card__label">Motto</p>
+      <p class="tutor-profile-card__text">
+        {{ profile.motto || 'No motto provided yet.' }}
+      </p>
+
+      <button routerLink="/tutor/profile/edit" type="button" class="primary-button">
+        Edit Profile
+      </button>
+    </div>
+  </section>
+</div>
