@@ -1,23 +1,29 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { TutorProfileComponent } from './tutor-profile/tutor-profile.component';
-import { TutorProfileEditComponent } from './tutor-profile-edit/tutor-profile-edit.component';
+import { ReactiveFormsModule } from '@angular/forms';
+import { TouristProfileComponent } from './tourist-profile/tourist-profile.component';
+import { TouristProfileEditComponent } from './tourist-profile-edit/tourist-profile-edit.component';
+import { AuthorProfileComponent } from './author-profile/author-profile.component';
+import { AuthorProfileEditComponent } from './author-profile-edit/author-profile-edit.component';
 
 @NgModule({
   declarations: [
-    TutorProfileComponent,
-    TutorProfileEditComponent
+    TouristProfileComponent,
+    TouristProfileEditComponent,
+    AuthorProfileComponent,
+    AuthorProfileEditComponent
   ],
   imports: [
     CommonModule,
-    ReactiveFormsModule,
-    RouterModule
+    RouterModule,
+    ReactiveFormsModule
   ],
   exports: [
-    TutorProfileComponent,
-    TutorProfileEditComponent
+    TouristProfileComponent,
+    TouristProfileEditComponent,
+    AuthorProfileComponent,
+    AuthorProfileEditComponent
   ]
 })
 export class StakeholdersModule { }

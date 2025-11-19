@@ -1,4 +1,4 @@
-export interface TutorProfile {
+export interface Profile {
   name: string;
   surname: string;
   biography?: string | null;
@@ -6,4 +6,4 @@ export interface TutorProfile {
   profilePictureUrl?: string | null;
 }
 
-export type TutorProfilePayload = TutorProfile;
+export type ProfilePayload = Profile;

@@ -1,4 +1,4 @@
-.tutor-profile-edit {
+.profile-edit {
   max-width: 720px;
   margin: 0 auto;
   padding: 24px;
@@ -7,7 +7,7 @@
   border-radius: 8px;
 }
 
-.tutor-profile-edit h2 {
+.profile-edit h2 {
   margin-top: 0;
   margin-bottom: 24px;
 }

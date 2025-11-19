@@ -1,15 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TutorProfile } from '../model/tutor-profile.model';
-import { TutorProfileService } from '../tutor-profile.service';
+import { Profile } from '../model/profile.model';
+import { ProfileClientService } from '../profile-client.service';
 
 @Component({
-  selector: 'xp-tutor-profile-edit',
-  templateUrl: './tutor-profile-edit.component.html',
-  styleUrls: ['./tutor-profile-edit.component.css']
+  selector: 'xp-author-profile-edit',
+  templateUrl: './author-profile-edit.component.html',
+  styleUrls: ['./author-profile-edit.component.css']
 })
-export class TutorProfileEditComponent implements OnInit {
+export class AuthorProfileEditComponent implements OnInit {
 
   private readonly maxImageSize = 2 * 1024 * 1024; // 2 MB
   readonly biographyMaxLength = 250;
@@ -31,7 +31,7 @@ export class TutorProfileEditComponent implements OnInit {
   constructor(
     private readonly fb: FormBuilder,
     private readonly router: Router,
-    private readonly tutorService: TutorProfileService
+    private readonly profileService: ProfileClientService
   ) { }
 
   ngOnInit(): void {
@@ -55,7 +55,7 @@ export class TutorProfileEditComponent implements OnInit {
   }
 
   private loadProfile(): void {
-    this.tutorService.getMyProfile().subscribe({
+    this.profileService.getAuthorProfile().subscribe({
       next: (profile) => {
         this.patchForm(profile);
       },
@@ -65,7 +65,7 @@ export class TutorProfileEditComponent implements OnInit {
     });
   }
 
-  private patchForm(profile: TutorProfile): void {
+  private patchForm(profile: Profile): void {
     this.profileForm.patchValue({
       name: profile.name ?? '',
       surname: profile.surname ?? '',
@@ -121,10 +121,10 @@ export class TutorProfileEditComponent implements OnInit {
 
     this.isSaving = true;
     this.errorMessage = '';
-    this.tutorService.updateMyProfile(this.profileForm.value as TutorProfile).subscribe({
+    this.profileService.updateAuthorProfile(this.profileForm.value as Profile).subscribe({
       next: () => {
         this.isSaving = false;
-        this.router.navigate(['/tutor/profile'], { state: { profileUpdated: true } });
+        this.router.navigate(['/author/profile'], { state: { profileUpdated: true } });
       },
       error: () => {
         this.isSaving = false;
@@ -134,6 +134,6 @@ export class TutorProfileEditComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/tutor/profile']);
+    this.router.navigate(['/author/profile']);
   }
 }

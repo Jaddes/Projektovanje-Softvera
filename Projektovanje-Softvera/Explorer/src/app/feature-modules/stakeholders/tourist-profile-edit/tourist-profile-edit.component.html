@@ -1,0 +1,71 @@
+<div class="profile-edit">
+  <h2>Edit Profile</h2>
+
+  <form [formGroup]="profileForm" (ngSubmit)="save()" novalidate>
+    <div class="form-field">
+      <label for="name">Name *</label>
+      <input id="name" formControlName="name" type="text" />
+      <div class="form-field__hint error" *ngIf="name?.touched && name?.invalid">
+        Name is required.
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label for="surname">Surname *</label>
+      <input id="surname" formControlName="surname" type="text" />
+      <div class="form-field__hint error" *ngIf="surname?.touched && surname?.invalid">
+        Surname is required.
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label for="biography">Biography</label>
+      <textarea id="biography" formControlName="biography" rows="4"></textarea>
+      <div class="form-field__hint">
+        {{ biography?.value?.length || 0 }}/{{ biographyMaxLength }} characters
+      </div>
+      <div class="form-field__hint error" *ngIf="biography?.errors?.['maxlength']">
+        Biography cannot exceed {{ biographyMaxLength }} characters.
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label for="motto">Motto</label>
+      <textarea id="motto" formControlName="motto" rows="2"></textarea>
+      <div class="form-field__hint">
+        {{ motto?.value?.length || 0 }}/{{ mottoMaxLength }} characters
+      </div>
+      <div class="form-field__hint error" *ngIf="motto?.errors?.['maxlength']">
+        Motto cannot exceed {{ mottoMaxLength }} characters.
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label for="profilePicture">Profile Picture</label>
+      <input id="profilePicture" type="file" accept=".jpg,.jpeg,.png" (change)="onFileSelected($event)" />
+      <div class="form-field__hint">
+        JPG or PNG, max 2 MB.
+      </div>
+      <div class="form-field__hint error" *ngIf="profilePictureError">
+        {{ profilePictureError }}
+      </div>
+      <div class="form-field__preview" *ngIf="avatarPreview">
+        <p>Preview:</p>
+        <img [src]="avatarPreview" alt="Selected profile picture preview" />
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="primary-button" type="submit" [disabled]="isSaving">
+        {{ isSaving ? 'Saving...' : 'Save' }}
+      </button>
+      <button class="secondary-button" type="button" (click)="cancel()" [disabled]="isSaving">
+        Cancel
+      </button>
+    </div>
+  </form>
+
+  <div class="error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+</div>

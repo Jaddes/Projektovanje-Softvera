@@ -1,20 +1,24 @@
 import { Component, OnInit } from '@angular/core';
-import { TutorProfile } from '../model/tutor-profile.model';
-import { TutorProfileService } from '../tutor-profile.service';
+import { Router } from '@angular/router';
+import { Profile } from '../model/profile.model';
+import { ProfileClientService } from '../profile-client.service';
 
 @Component({
-  selector: 'xp-tutor-profile',
-  templateUrl: './tutor-profile.component.html',
-  styleUrls: ['./tutor-profile.component.css']
+  selector: 'xp-author-profile',
+  templateUrl: './author-profile.component.html',
+  styleUrls: ['./author-profile.component.css']
 })
-export class TutorProfileComponent implements OnInit {
+export class AuthorProfileComponent implements OnInit {
 
-  profile?: TutorProfile;
+  profile?: Profile;
   isLoading = false;
   errorMessage = '';
   successMessage = '';
 
-  constructor(private readonly tutorService: TutorProfileService) { }
+  constructor(
+    private readonly profileService: ProfileClientService,
+    private readonly router: Router
+  ) {}
 
   ngOnInit(): void {
     const navState = window.history.state as { profileUpdated?: boolean };
@@ -28,7 +32,7 @@ export class TutorProfileComponent implements OnInit {
   private loadProfile(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    this.tutorService.getMyProfile().subscribe({
+    this.profileService.getAuthorProfile().subscribe({
       next: (profile) => {
         this.profile = profile;
         this.isLoading = false;
@@ -39,5 +43,9 @@ export class TutorProfileComponent implements OnInit {
         this.errorMessage = 'Unable to load your profile. Please try again later.';
       }
     });
+  }
+
+  editProfile(): void {
+    this.router.navigate(['/author/profile/edit']);
   }
 }
