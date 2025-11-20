@@ -1,13 +1,15 @@
+using System.IO;
 using System.Linq;
-using Explorer.API.Controllers.Author;
-using Explorer.API.Controllers.Tourist;
 using Explorer.BuildingBlocks.Core.Exceptions;
 using Explorer.Stakeholders.API.Dtos;
 using Explorer.Stakeholders.API.Public;
 using Explorer.Stakeholders.Infrastructure.Database;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using AuthorProfileController = Explorer.API.Controllers.Author.ProfileController;
+using TouristProfileController = Explorer.API.Controllers.Tourist.ProfileController;
 
 namespace Explorer.Stakeholders.Tests.Integration.Profile;
 
@@ -20,6 +22,7 @@ public class ProfileCommandTests : BaseStakeholdersIntegrationTest
     public void Gets_existing_profile_for_tourist()
     {
         using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
         var controller = CreateTouristController(scope);
 
         var result = (OkObjectResult)controller.Get().Result!;
@@ -27,25 +30,41 @@ public class ProfileCommandTests : BaseStakeholdersIntegrationTest
 
         dto.ShouldNotBeNull();
         dto.Name.ShouldBe("Pera");
-        dto.Surname.ShouldBe("Perić");
+        dto.Surname.ShouldBe("Peric");
         dto.Biography.ShouldBe("Planinar i ljubitelj prirode.");
         dto.Motto.ShouldBe("Carpe diem");
+        dto.ProfilePictureUrl.ShouldBe("http://example.com/pera.jpg");
+    }
+
+    [Fact]
+    public void Gets_existing_profile_for_author()
+    {
+        using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
+        var controller = CreateAuthorController(scope);
+
+        var result = (OkObjectResult)controller.Get().Result!;
+        var dto = result.Value as ProfileDto;
+
+        dto.ShouldNotBeNull();
+        dto.Name.ShouldBe("Ana");
+        dto.Surname.ShouldBe("Anic");
+        dto.Biography.ShouldBe("Autorka avanturistickih tura.");
+        dto.Motto.ShouldBe("Pisem dok lutam.");
+        dto.ProfilePictureUrl.ShouldBeNull(); // frontend falls back to default avatar
     }
 
     [Fact]
     public void Updates_profile_for_tourist()
     {
         using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
         var controller = CreateTouristController(scope);
         var dbContext = scope.ServiceProvider.GetRequiredService<StakeholdersContext>();
-        var updated = new ProfileDto
-        {
-            Name = "Petar",
-            Surname = "Petrović",
-            Biography = "Volim planinarenje i nove izazove.",
-            Motto = "Uvek spreman",
-            ProfilePictureUrl = "http://example.com/petar.jpg"
-        };
+        var updated = BuildValidProfileDto("Petar", "Petrovic");
+        updated.Biography = "Volim planinarenje i nove izazove.";
+        updated.Motto = "Uvek spreman";
+        updated.ProfilePictureUrl = "http://example.com/petar.jpg";
 
         var result = (OkObjectResult)controller.Update(updated).Result!;
         var dto = result.Value as ProfileDto;
@@ -66,53 +85,208 @@ public class ProfileCommandTests : BaseStakeholdersIntegrationTest
     }
 
     [Fact]
+    public void Updates_profile_for_author()
+    {
+        using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
+        var controller = CreateAuthorController(scope);
+        var dbContext = scope.ServiceProvider.GetRequiredService<StakeholdersContext>();
+        var updated = BuildValidProfileDto("Ana", "Anic");
+        updated.Biography = "Pisanje i putovanja su moj posao.";
+        updated.Motto = "Inspiriši i vodi.";
+        updated.ProfilePictureUrl = "http://example.com/ana.jpg";
+
+        var result = (OkObjectResult)controller.Update(updated).Result!;
+        var dto = result.Value as ProfileDto;
+
+        dto.ShouldNotBeNull();
+        dto.Name.ShouldBe(updated.Name);
+        dto.Surname.ShouldBe(updated.Surname);
+        dto.Biography.ShouldBe(updated.Biography);
+        dto.Motto.ShouldBe(updated.Motto);
+        dto.ProfilePictureUrl.ShouldBe(updated.ProfilePictureUrl);
+
+        var stored = dbContext.Profiles.First(p => p.PersonId == -11);
+        stored.Name.ShouldBe(updated.Name);
+        stored.Surname.ShouldBe(updated.Surname);
+        stored.Biography.ShouldBe(updated.Biography);
+        stored.Motto.ShouldBe(updated.Motto);
+        stored.ProfilePictureUrl.ShouldBe(updated.ProfilePictureUrl);
+    }
+
+    [Fact]
     public void Creates_profile_for_author_if_missing()
     {
         using var scope = Factory.Services.CreateScope();
-        var controller = CreateAuthorController(scope);
+        ResetDatabase(scope);
+        var controller = CreateAuthorController(scope, -12);
         var dbContext = scope.ServiceProvider.GetRequiredService<StakeholdersContext>();
 
         var result = (OkObjectResult)controller.Get().Result!;
         var dto = result.Value as ProfileDto;
 
         dto.ShouldNotBeNull();
-        dto.Name.ShouldBe("Ana");
-        dto.Surname.ShouldBe("Anić");
+        dto.Name.ShouldBe("Lena");
+        dto.Surname.ShouldBe("Lenic");
 
-        var stored = dbContext.Profiles.FirstOrDefault(p => p.PersonId == -11);
+        var stored = dbContext.Profiles.FirstOrDefault(p => p.PersonId == -12);
         stored.ShouldNotBeNull();
-        stored!.Name.ShouldBe("Ana");
-        stored.Surname.ShouldBe("Anić");
+        stored!.Name.ShouldBe("Lena");
+        stored.Surname.ShouldBe("Lenic");
     }
 
     [Fact]
-    public void Update_profile_fails_for_invalid_data()
+    public void Tourist_profile_without_picture_uses_default_avatar()
     {
         using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
+        var controller = CreateTouristController(scope, -22);
+
+        var result = (OkObjectResult)controller.Get().Result!;
+        var dto = result.Value as ProfileDto;
+
+        dto.ShouldNotBeNull();
+        dto.ProfilePictureUrl.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Author_profile_without_picture_uses_default_avatar()
+    {
+        using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
+        var controller = CreateAuthorController(scope);
+
+        var result = (OkObjectResult)controller.Get().Result!;
+        var dto = result.Value as ProfileDto;
+
+        dto.ShouldNotBeNull();
+        dto.ProfilePictureUrl.ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData("", "Tester", true)]
+    [InlineData("Tester", "", true)]
+    [InlineData("", "Tester", false)]
+    [InlineData("Tester", "", false)]
+    public void Update_profile_fails_for_missing_required_fields(string name, string surname, bool forTourist)
+    {
+        using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
+        var dto = BuildValidProfileDto(name, surname);
+
+        if (forTourist)
+        {
+            var controller = CreateTouristController(scope);
+            Should.Throw<EntityValidationException>(() => controller.Update(dto));
+        }
+        else
+        {
+            var controller = CreateAuthorController(scope);
+            Should.Throw<EntityValidationException>(() => controller.Update(dto));
+        }
+    }
+
+    [Fact]
+    public void Update_profile_fails_when_biography_is_too_long()
+    {
+        using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
         var controller = CreateTouristController(scope);
+        var dto = BuildValidProfileDto();
+        dto.Biography = new string('b', 251);
 
-        var invalid = new ProfileDto
-        {
-            Name = string.Empty,
-            Surname = "Perić"
-        };
-
-        Should.Throw<EntityValidationException>(() => controller.Update(invalid));
+        Should.Throw<EntityValidationException>(() => controller.Update(dto));
     }
 
-    private static Tourist.ProfileController CreateTouristController(IServiceScope scope)
+    [Fact]
+    public void Update_author_profile_fails_when_motto_is_too_long()
     {
-        return new Tourist.ProfileController(scope.ServiceProvider.GetRequiredService<IProfileService>())
+        using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
+        var controller = CreateAuthorController(scope);
+        var dto = BuildValidProfileDto();
+        dto.Motto = new string('m', 251);
+
+        Should.Throw<EntityValidationException>(() => controller.Update(dto));
+    }
+
+    [Fact]
+    public void Tourist_can_only_update_his_profile()
+    {
+        using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
+        var controller = CreateTouristController(scope, -22);
+        var dbContext = scope.ServiceProvider.GetRequiredService<StakeholdersContext>();
+        var untouchedBefore = dbContext.Profiles.First(p => p.PersonId == -21);
+
+        var dto = BuildValidProfileDto("Milan", "Milic");
+        dto.Biography = "Podesavanje samo za mene.";
+        controller.Update(dto);
+
+        var own = dbContext.Profiles.First(p => p.PersonId == -22);
+        own.Name.ShouldBe(dto.Name);
+        own.Biography.ShouldBe(dto.Biography);
+
+        var stillOriginal = dbContext.Profiles.First(p => p.PersonId == -21);
+        stillOriginal.Name.ShouldBe(untouchedBefore.Name);
+        stillOriginal.Biography.ShouldBe(untouchedBefore.Biography);
+    }
+
+    [Fact]
+    public void Author_can_only_update_his_profile()
+    {
+        using var scope = Factory.Services.CreateScope();
+        ResetDatabase(scope);
+        var controller = CreateAuthorController(scope, -12);
+        var dbContext = scope.ServiceProvider.GetRequiredService<StakeholdersContext>();
+        var untouchedBefore = dbContext.Profiles.First(p => p.PersonId == -11);
+
+        var dto = BuildValidProfileDto("Lena", "Lenic");
+        dto.Biography = "Moj licni opis.";
+        controller.Update(dto);
+
+        var own = dbContext.Profiles.First(p => p.PersonId == -12);
+        own.Name.ShouldBe(dto.Name);
+        own.Biography.ShouldBe(dto.Biography);
+
+        var stillOriginal = dbContext.Profiles.First(p => p.PersonId == -11);
+        stillOriginal.Name.ShouldBe(untouchedBefore.Name);
+        stillOriginal.Biography.ShouldBe(untouchedBefore.Biography);
+    }
+
+    private static ProfileDto BuildValidProfileDto(string name = "Test", string surname = "Tester")
+        => new ProfileDto
         {
-            ControllerContext = BuildContext("-21")
+            Name = name,
+            Surname = surname,
+            Biography = "Kratak opis.",
+            Motto = "Carpe diem",
+            ProfilePictureUrl = "http://example.com/default.jpg"
+        };
+
+    private static TouristProfileController CreateTouristController(IServiceScope scope, long personId = -21)
+    {
+        return new TouristProfileController(scope.ServiceProvider.GetRequiredService<IProfileService>())
+        {
+            ControllerContext = BuildContext(personId.ToString())
         };
     }
 
-    private static Author.ProfileController CreateAuthorController(IServiceScope scope)
+    private static AuthorProfileController CreateAuthorController(IServiceScope scope, long personId = -11)
     {
-        return new Author.ProfileController(scope.ServiceProvider.GetRequiredService<IProfileService>())
+        return new AuthorProfileController(scope.ServiceProvider.GetRequiredService<IProfileService>())
         {
-            ControllerContext = BuildContext("-11")
+            ControllerContext = BuildContext(personId.ToString())
         };
+    }
+
+    private static void ResetDatabase(IServiceScope scope)
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<StakeholdersContext>();
+        var path = Path.Combine(".", "..", "..", "..", "TestData");
+        var scriptFiles = Directory.GetFiles(path);
+        Array.Sort(scriptFiles);
+        var script = string.Join('\n', scriptFiles.Select(File.ReadAllText));
+        dbContext.Database.ExecuteSqlRaw(script);
     }
 }
